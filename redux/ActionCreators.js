@@ -1,5 +1,6 @@
 import * as ActionTypes from './ActionTypes';
 import { baseUrl } from '../shared/baseUrl';
+import { Rating } from 'react-native-elements';
 
 export const fetchComments = () => (dispatch) => {
     return fetch(baseUrl + 'comments')
@@ -154,3 +155,23 @@ export const addFavorite = (dishId) => ({
     type: ActionTypes.ADD_FAVORITE,
     payload: dishId
 });
+
+export const addComment = (comment) => (
+    {
+        type: ActionTypes.ADD_COMMENT,
+        payload: comment
+    }
+);
+
+export const postComment = (dishId, Rating, Author, Comment) => (dispatch) => {
+    const newComment = {
+        dishId: dishId,
+        rating: Rating,
+        author: Author,
+        comment: Comment
+    }
+    newComment.date= new Date().toISOString();
+    setTimeout(() => {
+        dispatch(addComment(newComment));
+    }, 2000);
+}
