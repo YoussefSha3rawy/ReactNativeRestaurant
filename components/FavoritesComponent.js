@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { FlatList, View, Text, Alert } from 'react-native';
-import { ListItem } from 'react-native-elements';
+import { ListItem, Button } from 'react-native-elements';
 import { connect } from 'react-redux';
 import { Loading } from './LoadingComponent';
 import { baseUrl } from '../shared/baseUrl';
@@ -84,7 +84,7 @@ class Favorites extends Component {
                 </View>
             );
         }
-        else {
+        else if (this.props.favorites.length) {
             return (
                 <FlatList
                     data={this.props.dishes.dishes.filter(dish => this.props.favorites.some(el => el === dish.id))}
@@ -92,6 +92,17 @@ class Favorites extends Component {
                     keyExtractor={item => item.id.toString()}
                 />
             );
+        }
+        else {
+            return (
+                <View style={{ flex:1, alignItems:"center", justifyContent:"center" }}>
+                    <Text>You have no favorites.</Text>
+                    <View style={{flexDirection:"row"}}>
+                        <Text>Start by adding some from the </Text>
+                        <Text style={{color: 'blue', fontWeight:"bold"}} onPress={() => navigate('Menu', {})} >Menu</Text>
+                    </View>
+                </View>
+            )
         }
     }
 }

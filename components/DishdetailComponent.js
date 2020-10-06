@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, ScrollView, FlatList, Modal, StyleSheet, Button, Alert, PanResponder } from 'react-native';
+import { Text, View, ScrollView, FlatList, Modal, StyleSheet, Button, Alert, PanResponder, Share } from 'react-native';
 import { Card, Icon, Input, Rating } from 'react-native-elements';
 import { connect } from 'react-redux';
 import { baseUrl } from '../shared/baseUrl';
@@ -42,6 +42,11 @@ class Dishdetail extends Component {
     submitComment() {
         this.props.postComment(this.props.navigation.getParam('dishId', ''), this.state.rating, this.state.author, this.state.comment);
         this.toggleModal();
+        this.setState({
+            author: '',
+            rating: 3,
+            comment: ''
+        })
     }
 
     markFavorite(dishId) {
@@ -73,15 +78,18 @@ class Dishdetail extends Component {
                     />
                     <Input
                         value={this.state.author}
-                        placeholder=" Author"
+                        placeholder="Author"
                         leftIcon={{ type: 'font-awesome', name: 'user' }}
+                        leftIconContainerStyle={{marginRight:10}}
                         onChangeText={(text) => { this.setState({ author: text }) }}
                         autoCapitalize="words"
                     />
                     <Input
                         value={this.state.comment}
-                        placeholder=" Comment"
+                        placeholder="Comment"
+                        multiline
                         leftIcon={{ type: 'font-awesome', name: 'comment' }}
+                        leftIconContainerStyle={{marginRight:10}}
                         onChangeText={(text) => { this.setState({ comment: text }) }}
                     />
                     <View style={{ margin: 10 }}>
@@ -108,7 +116,6 @@ function RenderComments(props) {
     const comments = props.comments;
 
     const renderCommentItem = ({ item, index }) => {
-
         return (
             <View key={index} style={{ margin: 10 }}>
                 <Text style={{ fontSize: 14 }}>{item.comment}</Text>
@@ -118,7 +125,7 @@ function RenderComments(props) {
                     style={{ paddingVertical: 10, flexDirection: 'row' }}
                     startingValue={item.rating}
                 />
-                <Text style={{ fontSize: 12, flexDirection: 'row', textAlign: 'right' }}>{'-- ' + item.author + ', ' + item.date} </Text>
+                <Text style={{ fontSize: 12, flexDirection: 'row', textAlign: 'right' }}>{'-- ' + item.author + ', ' + (new Date(item.date)).toLocaleDateString()}</Text>
             </View>
         );
     };
@@ -137,13 +144,19 @@ function RenderComments(props) {
 }
 
 function RenderDish(props) {
-
     const dish = props.dish;
 
     handleViewRef = ref => this.view = ref;
 
     const recognizeDrag = ({ moveX, moveY, dx, dy }) => {
         if (dx < -200)
+            return true;
+        else
+            return false;
+    }
+
+    const recognizeComment = ({ moveX, moveY, dx, dy }) => {
+        if (dx > 200)
             return true;
         else
             return false;
@@ -177,9 +190,22 @@ function RenderDish(props) {
                         { cancelable: false }
                     )
             }
+            if (recognizeComment(gestureState)) {
+                props.toggleModal();
+            }
             return true;
         }
-    })
+    });
+
+    const shareDish = (title, message, url) => {
+        Share.share({
+            title: title,
+            message: 'Check out ' + title + '! ' + message + ' ' + url,
+            url: url
+        },{
+            dialogTitle: 'Share ' + title
+        })
+    }
 
     if (dish != null) {
         const deleteAlert = () => {
@@ -219,13 +245,20 @@ function RenderDish(props) {
                             onPress={() => props.favorite ? deleteAlert() : props.onPress()}
                         />
                         <Icon
-                            raised
                             reverse
-                            name={'pencil'}
+                            name='pencil'
                             type='font-awesome'
                             color='#512DA8'
                             onPress={() => props.toggleModal()}
                         />
+                        <Icon
+                            raised
+                            reverse
+                            name='share-alt'
+                            type='font-awesome'
+                            color='#51D2A8'
+                            style={styles.cardItem}
+                            onPress={() => shareDish(dish.name, dish.description, baseUrl + dish.image)} />
                     </View>
                 </Card>
             </Animatable.View>);
