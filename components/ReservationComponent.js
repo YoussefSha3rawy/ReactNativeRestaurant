@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import { Text, View, StyleSheet, Picker, Switch, Button, Modal, Alert } from 'react-native';
-import DatePicker from 'react-native-datepicker';
 import * as Animatable from 'react-native-animatable';
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { Icon } from 'react-native-elements';
 
 class Reservation extends Component {
 
@@ -13,8 +14,9 @@ class Reservation extends Component {
         this.state = {
             guests: 1,
             smoking: false,
-            date: '',
-            // showModal: false
+            date: new Date(),
+            // showModal: false,
+            isDatePickerVisible: false
         }
     }
 
@@ -33,7 +35,7 @@ class Reservation extends Component {
         await this.obtainNotificationPermission();
         Notifications.presentLocalNotificationAsync({
             title: 'Your Reservation',
-            body: 'Reservation for '+ new Date(date).toLocaleDateString() + ' requested',
+            body: 'Reservation for ' + date.toUTCString() + ' requested',
             ios: {
                 sound: true
             },
@@ -46,7 +48,7 @@ class Reservation extends Component {
     }
 
     static navigationOptions = {
-        title: 'Reserve Table',
+        title: 'Reserve Table'
     };
 
     toggleModal() {
@@ -58,10 +60,10 @@ class Reservation extends Component {
         // this.toggleModal();
         Alert.alert(
             'Reservation Details',
-            `Number of Guests: ${this.state.guests} \nSmoking? ${this.state.smoking} \nDate: ${(new Date(this.state.date)).toLocaleDateString()}`,
+            `Number of Guests: ${this.state.guests} \nSmoking? ${this.state.smoking} \nDate: ${this.state.date.toUTCString()}`,
             [
                 { text: 'Cancel', onPress: () => this.resetForm(), style: 'cancel' },
-                { text: 'OK', onPress: () => {this.presentLocalNotification(this.state.date); this.resetForm()} },
+                { text: 'OK', onPress: () => { this.presentLocalNotification(this.state.date); this.resetForm() } },
             ],
             { cancelable: false }
         )
@@ -71,7 +73,7 @@ class Reservation extends Component {
         this.setState({
             guests: 1,
             smoking: false,
-            date: '',
+            date: new Date(),
             // showModal: false
         });
     }
@@ -102,7 +104,7 @@ class Reservation extends Component {
                         onValueChange={(value) => this.setState({ smoking: value })}>
                     </Switch>
                 </View>
-                <View style={styles.formRow}>
+                {/* <View style={styles.formRow}>
                     <Text style={styles.formLabel}>Date and Time</Text>
                     <DatePicker
                         style={{ flex: 2, marginRight: 20 }}
@@ -126,6 +128,27 @@ class Reservation extends Component {
                             // ... You can check the source to find the other keys. 
                         }}
                         onDateChange={(date) => { this.setState({ date: date }) }}
+                    />
+                </View> */}
+                <View style={styles.formRow}>
+                    <Text style={styles.formLabel}>Time</Text>
+                    <View style={styles.formItem}>
+                        <Icon
+                            containerStyle={{marginTop:-30}}
+                            raised
+                            color="#dd0000"
+                            reverse
+                            name='table'
+                            type='font-awesome'
+                            onPress={() => this.setState({ isDatePickerVisible: true })}
+                        />
+                    </View>
+                    <Text style={{...styles.formItem, borderWidth:2, textAlign:"center"}}>{this.state.date.toUTCString()}</Text>
+                    <DateTimePickerModal
+                        isVisible={this.state.isDatePickerVisible}
+                        mode="datetime"
+                        onConfirm={(date) => { this.setState({ date: date }) }}
+                        onCancel={() => this.setState({ isDatePickerVisible: false })}
                     />
                 </View>
                 <View style={styles.formRow}>
