@@ -82,7 +82,9 @@ class Home extends Component {
             {
                 toValue: 8,
                 duration: 16000,
-                easing: Easing.linear
+                easing: Easing.linear,
+                useNativeDriver:true
+
             }
         ).start(() => this.animate())
     }
@@ -105,7 +107,7 @@ class Home extends Component {
 
         return (
             <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center' }}>
-                <Animated.View style={{ width: '100%', transform: [{ translateX: xpos1 }] }}>
+                <Animated.View style={{ width: '100%', transform: [{ translateX: xpos1 }] }} >
                     <RenderItem item={this.props.dishes.dishes.filter((dish) => dish.featured)[0]}
                         isLoading={this.props.dishes.isLoading}
                         erreMess={this.props.dishes.erreMess}

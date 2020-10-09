@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
-import { Text, View, StyleSheet, Picker, Switch, Button, Modal, Alert } from 'react-native';
+import { Text, View, StyleSheet, Picker, Switch, Button, Alert } from 'react-native';
 import * as Animatable from 'react-native-animatable';
-import { Notifications } from 'expo';
+import * as Notifications from 'expo-notifications';
 import * as Permissions from 'expo-permissions';
+import * as Calendar from 'expo-calendar';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Icon } from 'react-native-elements';
 
@@ -15,7 +16,6 @@ class Reservation extends Component {
             guests: 1,
             smoking: false,
             date: new Date(),
-            // showModal: false,
             isDatePickerVisible: false
         }
     }
@@ -33,7 +33,7 @@ class Reservation extends Component {
 
     async presentLocalNotification(date) {
         await this.obtainNotificationPermission();
-        Notifications.presentLocalNotificationAsync({
+        Notifications.presentNotificationAsync({
             title: 'Your Reservation',
             body: 'Reservation for ' + date.toUTCString() + ' requested',
             ios: {
@@ -47,13 +47,33 @@ class Reservation extends Component {
         });
     }
 
+    async obtainCalendarPermission() {
+        let permission = await Permissions.getAsync(Permissions.CALENDAR);
+        if (permission.status !== 'granted') {
+            permission = await Permissions.askAsync(Permissions.CALENDAR);
+            if (permission.status !== 'granted') {
+                Alert.alert('Permission not granted to access the calender');
+            }
+        }
+        return permission;
+    }
+
+    async addReservationToCalendar(date){
+        await this.obtainCalendarPermission();
+        const defaultCalender = await Calendar.getCalendarsAsync().then(Calenders=>Calenders.find(Calender => Calender.isPrimary)||Calenders[0]);
+        const options = {
+            title:"Con Fusion Table Reservation",
+            startDate: date,
+            endDate: new Date(date.getTime()+2*60*60*1000),
+            timeZone:'Asia/Hong_Kong',
+            location: '121, Clear Water Bay Road, Clear Water Bay, Kowloon, Hong Kong'
+        }
+        await Calendar.createEventAsync(defaultCalender.id,options);
+    }
+
     static navigationOptions = {
         title: 'Reserve Table'
     };
-
-    toggleModal() {
-        this.setState({ showModal: !this.state.showModal });
-    }
 
     handleReservation() {
         console.log(JSON.stringify(this.state));
@@ -63,7 +83,7 @@ class Reservation extends Component {
             `Number of Guests: ${this.state.guests} \nSmoking? ${this.state.smoking} \nDate: ${this.state.date.toUTCString()}`,
             [
                 { text: 'Cancel', onPress: () => this.resetForm(), style: 'cancel' },
-                { text: 'OK', onPress: () => { this.presentLocalNotification(this.state.date); this.resetForm() } },
+                { text: 'OK', onPress: () => { this.presentLocalNotification(this.state.date); this.addReservationToCalendar(this.state.date); this.resetForm() } },
             ],
             { cancelable: false }
         )
@@ -73,8 +93,7 @@ class Reservation extends Component {
         this.setState({
             guests: 1,
             smoking: false,
-            date: new Date(),
-            // showModal: false
+            date: new Date()
         });
     }
 
@@ -104,32 +123,6 @@ class Reservation extends Component {
                         onValueChange={(value) => this.setState({ smoking: value })}>
                     </Switch>
                 </View>
-                {/* <View style={styles.formRow}>
-                    <Text style={styles.formLabel}>Date and Time</Text>
-                    <DatePicker
-                        style={{ flex: 2, marginRight: 20 }}
-                        date={this.state.date}
-                        format=''
-                        mode="date"
-                        placeholder="select date and Time"
-                        minDate={new Date()}
-                        confirmBtnText="Confirm"
-                        cancelBtnText="Cancel"
-                        customStyles={{
-                            dateIcon: {
-                                position: 'absolute',
-                                left: 0,
-                                top: 4,
-                                marginLeft: 0
-                            },
-                            dateInput: {
-                                marginLeft: 36
-                            }
-                            // ... You can check the source to find the other keys. 
-                        }}
-                        onDateChange={(date) => { this.setState({ date: date }) }}
-                    />
-                </View> */}
                 <View style={styles.formRow}>
                     <Text style={styles.formLabel}>Time</Text>
                     <View style={styles.formItem}>
@@ -147,7 +140,7 @@ class Reservation extends Component {
                     <DateTimePickerModal
                         isVisible={this.state.isDatePickerVisible}
                         mode="datetime"
-                        onConfirm={(date) => { this.setState({ date: date }) }}
+                        onConfirm={(date) => { this.setState({ date: date });this.setState({isDatePickerVisible:false}) }}
                         onCancel={() => this.setState({ isDatePickerVisible: false })}
                     />
                 </View>
@@ -159,23 +152,6 @@ class Reservation extends Component {
                         accessibilityLabel="Learn more about this purple button"
                     />
                 </View>
-                {/* <Modal animationType={"slide"} transparent={false}
-                    visible={this.state.showModal}
-                    onDismiss={() => this.toggleModal()}
-                    onRequestClose={() => this.toggleModal()}>
-                    <View style={styles.modal}>
-                        <Text style={styles.modalTitle}>Your Reservation</Text>
-                        <Text style={styles.modalText}>Number of Guests: {this.state.guests}</Text>
-                        <Text style={styles.modalText}>Smoking?: {this.state.smoking ? 'Yes' : 'No'}</Text>
-                        <Text style={styles.modalText}>Date and Time: {this.state.date}</Text>
-
-                        <Button
-                            onPress={() => { this.toggleModal(); this.resetForm(); }}
-                            color="#512DA8"
-                            title="Close"
-                        />
-                    </View>
-                </Modal> */}
             </Animatable.View>
         );
     }

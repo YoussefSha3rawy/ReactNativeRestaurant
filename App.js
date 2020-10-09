@@ -8,8 +8,6 @@ import { Loading } from './components/LoadingComponent';
 
 const { persistor, store } = ConfigureStore();
 
-LogBox.ignoreLogs(['deprecated', 'future release', 'nested', 'specified']);
-
 export default class App extends React.Component {
   render() {
     return (

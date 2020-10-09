@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, Text, ScrollView, Image } from 'react-native';
+import { View, StyleSheet, Text, ScrollView, Image, Modal } from 'react-native';
 import { Input, CheckBox, Button, Icon } from 'react-native-elements';
 import * as ImagePicker from 'expo-image-picker';
 import * as SecureStore from 'expo-secure-store';
 import * as Permissions from 'expo-permissions';
-import { createBottomTabNavigator } from 'react-navigation';
+import { createBottomTabNavigator } from 'react-navigation-tabs';
 import { baseUrl } from '../shared/baseUrl';
 import { Asset } from 'expo';
 import *  as ImageManipulator from 'expo-image-manipulator';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 class LoginTab extends Component {
 
@@ -130,6 +131,7 @@ class RegisterTab extends Component {
         super(props);
 
         this.state = {
+            showImageModal: false,
             username: '',
             password: '',
             firstname: '',
@@ -167,15 +169,29 @@ class RegisterTab extends Component {
         }
     }
 
+    getImageFromGallery = async () => {
+        const cameraRollPermission = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+
+        if (cameraRollPermission.status === 'granted') {
+            let pickedImage = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                aspect: [1, 1]
+            });
+            if (!pickedImage.cancelled) {
+                this.processImage(pickedImage.uri);
+            }
+        }
+    }
+
     processImage = async (imageUri) => {
         let processedImage = await ImageManipulator.manipulateAsync(
-            imageUri, 
+            imageUri,
             [
-                {resize: {width: 400}}
+                { resize: { width: 400 } }
             ],
-            {format: 'png'}
+            { format: 'png' }
         );
-        this.setState({imageUrl: processedImage.uri });
+        this.setState({ imageUrl: processedImage.uri });
     }
 
     handleRegister() {
@@ -185,16 +201,42 @@ class RegisterTab extends Component {
                 .catch((error) => console.log('Could not save user info', error));
     }
 
+    toggleModal() {
+        this.setState({ showImageModal: !this.state.showImageModal })
+    }
+
     render() {
         return (
             <ScrollView>
-                <View style={styles.container}>
-                    <View style={styles.imageContainer}>
+                <Modal animationType={"slide"}
+                    visible={this.state.showImageModal}
+                    transparent={true}
+                    onDismiss={() => this.toggleModal()}
+                    onRequestClose={() => this.toggleModal()}>
+                    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                        <View style={{marginRight:20,alignSelf:"flex-end"}}>
+                            <Icon
+                            type="font-awesome"
+                            name="times-circle"
+                            size={30}
+                            onPress={() => this.toggleModal()}
+                            />
+                        </View>
                         <Image
                             source={{ uri: this.state.imageUrl }}
-                            loadingIndicatorSource={require('./images/profilepic.png')}
-                            style={styles.image}
-                        />
+                            style={{ height: 300, width: 300 }}
+                      />
+                    </View>
+                </Modal>
+                <View style={styles.container}>
+                    <View style={styles.imageContainer}>
+                        <TouchableOpacity onPress={() => { this.toggleModal() }}>
+                            <Image
+                                source={{ uri: this.state.imageUrl }}
+                                loadingIndicatorSource={require('./images/profilepic.png')}
+                                style={styles.image}
+                            />
+                        </TouchableOpacity>
                         <View style={{ justifyContent: "center" }}>
                             <Icon
                                 raised
@@ -203,6 +245,16 @@ class RegisterTab extends Component {
                                 type='font-awesome'
                                 name='camera'
                                 onPress={this.getImageFromCamera}
+                            />
+                        </View>
+                        <View style={{ justifyContent: "center" }}>
+                            <Icon
+                                raised
+                                reverse
+                                color="#512DA8"
+                                type='font-awesome'
+                                name='image'
+                                onPress={this.getImageFromGallery}
                             />
                         </View>
                     </View>
